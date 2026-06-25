@@ -41,7 +41,7 @@ This code Just simple example of encrypted controller with full state feedback, 
 | :--- | :---: | :---: | :---: | :--- | :--- | :--- |
 | **full_state_feedback** | Python | BGV (OpenFHE-python) | ◎ | Available | nominal, quantized(_q), encrpyted(_enc) | Ⅹ |
 | **observer_form(with parametric)** | Python | - | Ⅹ | Available (without q and enc) | nominal | Ⅹ | 
-| **integral_control(with arx)** | Python/C++ | BGV (SEAL) | ◎ | Available | nominal, arx, arx(_q) | arx encrypted(_enc) |
+| **integral_control(with arx)** | Python/C++ | BGV (SEAL) | ◎ | Available | nominal, arx, arx(_q) | encrypted_arx(_enc) |
 
 ## How to use
 It explains the preparations before use, how to use the Ouanser Interactive Labs, and how to use the actual hardware.
