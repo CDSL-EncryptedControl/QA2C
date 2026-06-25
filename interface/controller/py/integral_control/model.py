@@ -155,7 +155,7 @@ class arx:
             is_obs = 1
             
             # all desired_poles set to zero
-            desired_poles = [0.0, 1e-5, -1e-5, 2e-5, -2e-5, 3e-5]
+            desired_poles = [0.0, 1e-5, -1e-5, 2e-6, -2e-6, 3e-7]
 
             # calc L, which is gain that F-LH can be nilpotent
             L = ct.place(self.F.T, self.H.T, desired_poles)
@@ -208,4 +208,68 @@ class arx:
         for i in range(6):
             self.u = self.u + self.HG[2*i:2*i+2,:] @ self.Ys[i,:].reshape(2,1) + self.HL[2*i:2*i+2,:] @ self.Us[i,:].reshape(2,1) + self.Href[2*i:2*i+2,:] @ ref_concat
         
+        return self.u
+
+class arx_q():
+    ts = 0.01
+
+    # quantized level s for matrix and r for signal
+    s = 1
+    r = 1
+
+    # sequence of y and u like y0, y1, ...,y3 and u0, ...,u3
+    # every y is column vector but save is row vector
+    Ys_q = np.zeros((6,2), dtype=int)
+    Us_q = np.zeros((6,2), dtype=int)
+
+    # gain of y sequence and u sequence
+    HG = np.zeros((12,2), dtype=float)
+    HL = np.zeros((12,2), dtype=float)
+    Href = np.zeros((12,6), dtype=float)
+    HG_q = np.zeros((12,2), dtype=int)
+    HL_q = np.zeros((12,2), dtype=int)
+    Href_q = np.zeros((12,6), dtype=int)
+
+    # output
+    u_q = np.zeros((2,1), dtype=int)
+    u = np.zeros((2,1), dtype=float)
+
+    def __init__(self, HG, HL, Href, ts):
+        self.HG = HG
+        self.HL = HL
+        self.Href = Href
+        self.ts = ts
+
+    def set_level(self, r, s):
+        self.r = r
+        self.s = s
+
+    def quantize(self):
+        self.HG_q = (self.s * self.HG).astype(int)
+        self.HL_q = (self.s * self.HL).astype(int)
+        self.Href_q = (self.s * self.Href).astype(int)
+
+    def mem_update(self, Yn, Un):
+        # i = 0 is oldest value
+        for i in range(5):
+            self.Ys_q[i,:] = self.Ys_q[(i+1),:]
+            self.Us_q[i,:] = self.Us_q[(i+1),:]
+
+        # new value input in i = 3
+        self.Ys_q[5,:] = (self.r * Yn.reshape(1,2)).astype(int)
+        self.Us_q[5,:] = (self.r * Un.reshape(1,2)).astype(int)
+
+    def get_output(self, ref):
+        ref_concat = np.vstack((np.zeros((4,1), dtype=float), self.ts * ref))
+        ref_concat_q =  (self.r * ref_concat).astype(int)
+
+        self.u_q[0,0] = 0
+        self.u_q[1,0] = 0
+
+        for i in range(6):
+            self.u_q = self.u_q + self.HG_q[2*i:2*i+2,:] @ self.Ys_q[i,:].reshape(2,1) + self.HL_q[2*i:2*i+2,:] @ self.Us_q[i,:].reshape(2,1) + self.Href_q[2*i:2*i+2,:] @ ref_concat_q
+        
+        self.u[0, 0] = float(self.u_q[0, 0]) / self.r / self.s
+        self.u[1, 0] = float(self.u_q[1, 0]) / self.r / self.s
+
         return self.u

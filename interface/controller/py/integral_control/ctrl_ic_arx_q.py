@@ -10,13 +10,19 @@ import model
 # get other tools
 import numpy as np
 
-def integral_control():
+def ic_arx_quantize():
     # set simulation(this section have to set same with plant)
     sampling_time = 0.05
     run_signal = True
 
     # get model from model description file
     intc = model.intc(sampling_time)
+    arx = model.arx(intc.F, intc.G, intc.H, intc.ts)
+    arx_q = model.arx_q(arx.HG, arx.HL, arx.Href, intc.ts)
+
+    # set quantized level and quantize matrix
+    arx_q.set_level(2048, 2048)
+    arx_q.quantize()
 
     # input/output initialization
     y = np.array([[0],
@@ -70,15 +76,15 @@ def integral_control():
                 tccp.send(ref[1, 0])
 
                 # state update and generate output
-                intc.state_update(y, u, ref)
-                u = intc.get_output()
+                arx_q.mem_update(y, u)
+                u = arx_q.get_output(ref)
             elif signal == "end":
                 # end of loop signal get
                 run_signal = False
                 break
 
 def main():
-    integral_control()
+    ic_arx_quantize()
 
 if __name__ == "__main__":
     main()

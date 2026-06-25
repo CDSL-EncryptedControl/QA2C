@@ -10,9 +10,9 @@ import model
 # get other tools
 import numpy as np
 
-def integral_control():
+def ic_arx():
     # set simulation(this section have to set same with plant)
-    sampling_time = 0.02
+    sampling_time = 0.05
     run_signal = True
 
     # get model from model description file
@@ -79,7 +79,7 @@ def integral_control():
                 break
 
 def main():
-    integral_control()
+    ic_arx()
 
 if __name__ == "__main__":
     main()
