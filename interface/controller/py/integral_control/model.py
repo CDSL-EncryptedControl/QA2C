@@ -23,10 +23,9 @@ class intc:
     L = np.zeros((4,2), dtype=float)
 
     # observer controller state space model
-    F = np.zeros((4,4), dtype=float)
-    G = np.zeros((4,2), dtype=float)
-    H = np.zeros((2,4), dtype=float)
-    J = np.zeros((2,2), dtype=float) 
+    F = np.zeros((6,6), dtype=float)
+    G = np.zeros((6,2), dtype=float)
+    H = np.zeros((2,6), dtype=float)
 
     # state and output
     x = np.zeros((6,1), dtype=float)
@@ -90,18 +89,20 @@ class intc:
 
         # save gain K and N_bar
         self.K = K
-        self.L[0:4,:] = L.T
+        self.L = L.T
 
         # make a controller state space matrix
-        self.F = self.A
-        self.G = self.L
+        F_horizon1 = np.hstack(((self.A - self.L @ self.C), np.zeros((4,2), dtype=float)))
+        F_horizon2 = np.hstack(((np.zeros((2,4), dtype=float)), np.array([[1, 0], [0, 1]], dtype=float)))
+        B_horizon = np.vstack((self.B, np.zeros((2,2), dtype=float)))
+        self.F = np.vstack((F_horizon1, F_horizon2)) - B_horizon @ self.K
+        self.G = np.vstack((self.L, np.array([[-self.ts, 0], [0, -self.ts]], dtype=float)))
         self.H = -self.K
 
     def state_update(self, y, u, ref):
         # update state on temp variable
-        x_obs = self.F @ self.x[0:4,:] + self.B @ u + self.G @ (y - self.C @ self.x[0:4,:])
-        x_int = self.x[4:6,:] + self.ts * (ref - y)
-        x_next = np.vstack((x_obs, x_int))
+        ref_concat = np.vstack((np.zeros((4,1), dtype=float), self.ts * ref))
+        x_next = self.F @ self.x + self.G @ y + ref_concat
         
         # save state
         self.x = x_next
@@ -109,5 +110,4 @@ class intc:
     def get_output(self):
         self.u = self.H @ self.x
         
-        return self.u
-        
+        return self.u 
