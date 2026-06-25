@@ -72,6 +72,9 @@ This project utilizes code from several open-source projects. We express our gra
 
 * **OpenFHE (Python)**
     * Licensed under the [BSD 2-Clause License](https://github.com/openfheorg/openfhe-python/blob/main/LICENSE)
+ 
+* **Microsoft SEAL**
+    * Licensed under the [MIT License](https://github.com/microsoft/SEAL/blob/main/LICENSE)
 
 * **Numpy**
     * Licensed under the [BSD 3-Clause License](https://github.com/numpy/numpy/blob/main/LICENSE.txt)
