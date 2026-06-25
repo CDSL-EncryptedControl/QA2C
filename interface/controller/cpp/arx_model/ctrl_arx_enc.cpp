@@ -14,7 +14,7 @@ using namespace std;
 #include "model_enc.h"
 
 // init tcp host and port
-const string host = "172.25.32.1";
+const string host = "127.0.0.1";
 const int port = 9999;
 
 int main()
