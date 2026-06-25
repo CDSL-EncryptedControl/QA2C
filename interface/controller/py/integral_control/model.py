@@ -110,4 +110,102 @@ class intc:
     def get_output(self):
         self.u = self.H @ self.x
         
-        return self.u 
+        return self.u
+    
+from numpy.linalg import matrix_rank, eigvals
+    
+class arx:
+    # sampling time
+    ts = 0.01
+
+    # observer controller state space model
+    F = np.zeros((6,6), dtype=float)
+    G = np.zeros((6,2), dtype=float)
+    H = np.zeros((2,6), dtype=float)
+
+    # gain for coordination transform
+    L = np.zeros((6,2), dtype=float)
+
+    # sequence of y and u like y0, y1, ...,y3 and u0, ...,u3
+    # every y is column vector but save is row vector
+    Ys = np.zeros((6,2), dtype=float)
+    Us = np.zeros((6,2), dtype=float)
+
+    # gain of y sequence and u sequence
+    HG = np.zeros((12,2), dtype=float)
+    HL = np.zeros((12,2), dtype=float)
+    Href = np.zeros((12,6), dtype=float)
+
+    # output
+    u = np.zeros((2,1), dtype=float)
+
+    def __init__(self, F, G, H, ts):
+        # save original controller's state matrix
+        self.ts = ts
+        self.F = F
+        self.G = G
+        self.H = H
+        
+        O_matrix = ct.obsv(F, H)
+        rank = matrix_rank(O_matrix)
+        if rank != 6:
+            is_obs = 0
+            print(f"This controller is not observable")
+        else:
+            is_obs = 1
+            
+            # all desired_poles set to zero
+            desired_poles = [0.0, 1e-5, -1e-5, 2e-5, -2e-5, 3e-5]
+
+            # calc L, which is gain that F-LH can be nilpotent
+            L = ct.place(self.F.T, self.H.T, desired_poles)
+
+            # save gain L
+            self.L = L.T
+            
+            # validation of gain L
+            eigenvalues = eigvals(self.F - self.L @self.H)
+            print(f"eigenvalue of F - LH:\n {eigenvalues}")
+
+            # calc H(F-LH)^3G ... HG and H(F-LH)^3L ... HL
+            self.HG[0:2,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.G)
+            self.HG[2:4,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.G)
+            self.HG[4:6,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.G)
+            self.HG[6:8,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.G)
+            self.HG[8:10,:] = (self.H @ (self.F - self.L @ self.H) @ self.G)    
+            self.HG[10:12,:] = (self.H @ self.G)   
+
+            self.HL[0:2,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.L)
+            self.HL[2:4,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.L)
+            self.HL[4:6,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.L)
+            self.HL[6:8,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ self.L)
+            self.HL[8:10,:] = (self.H @ (self.F - self.L @ self.H) @ self.L)    
+            self.HL[10:12,:] = (self.H @ self.L)
+
+            self.Href[0:2,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H))
+            self.Href[2:4,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H))
+            self.Href[4:6,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H))
+            self.Href[6:8,:] = (self.H @ (self.F - self.L @ self.H) @ (self.F - self.L @ self.H))
+            self.Href[8:10,:] = (self.H @ (self.F - self.L @ self.H))    
+            self.Href[10:12,:] = (self.H)
+
+    def mem_update(self, Yn, Un):
+        # i = 0 is oldest value
+        for i in range(5):
+            self.Ys[i,:] = self.Ys[(i+1),:]
+            self.Us[i,:] = self.Us[(i+1),:]
+
+        # new value input in i = 5
+        self.Ys[5,:] = Yn.reshape(1,2)
+        self.Us[5,:] = Un.reshape(1,2)
+
+    def get_output(self, ref):
+        ref_concat = np.vstack((np.zeros((4,1), dtype=float), self.ts * ref))
+
+        self.u[0, 0] = 0
+        self.u[1, 0] = 0
+
+        for i in range(6):
+            self.u = self.u + self.HG[2*i:2*i+2,:] @ self.Ys[i,:].reshape(2,1) + self.HL[2*i:2*i+2,:] @ self.Us[i,:].reshape(2,1) + self.Href[2*i:2*i+2,:] @ ref_concat
+        
+        return self.u
