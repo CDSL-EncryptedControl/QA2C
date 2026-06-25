@@ -40,7 +40,7 @@ This code Just simple example of encrypted controller with full state feedback, 
 | Model | Language | Encryption | Security (128-bit) | Status | Python Series | Other Series |
 | :--- | :---: | :---: | :---: | :--- | :--- | :--- |
 | **full_state_feedback** | Python | BGV (OpenFHE-python) | ◎ | Available | nominal, quantized(_q), encrpyted(_enc) | Ⅹ |
-| **observer_form(with parmetric)** | Python | - | Ⅹ | Available (without q and enc) | nominal | Ⅹ | 
+| **observer_form(with parametric)** | Python | - | Ⅹ | Available (without q and enc) | nominal | Ⅹ | 
 | **integral_control(with arx)** | Python/C++ | BGV (SEAL) | ◎ | Available | nominal, arx, arx(_q) | arx encrypted(_enc) |
 
 ## How to use
