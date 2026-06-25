@@ -33,7 +33,15 @@ The interfacing code for the Python simulator and the actual hardware, correspon
 The actual device consists of a single file, "plant.py" in "interface/plant/py/hardware".
 
 ### Controller description
-This code Just simple example of encrypted controller with full state feedback. (Observer form and their family form like ARX and integer matrix are not ready yet)
+This code Just simple example of encrypted controller with full state feedback, observer with parametric reference, integral control(transformd arx also include).
+
+**Controller Compatibility**
+
+| Model | Language | Encryption | Security (128-bit) | Status | Python Series | Other Series |
+| :--- | :---: | :---: | :---: | :--- | :--- | :--- |
+| **full_state_feedback** | Python | BGV (OpenFHE-python) | ◎ | Available | nominal, quantized(_q), encrpyted(_enc) | Ⅹ |
+| **observer_form(with parmetric)** | Python | - | Ⅹ | Available (without q and enc) | nominal | Ⅹ | 
+| **integral_control(with arx)** | Python/C++ | BGV (SEAL) | ◎ | Available | nominal, arx, arx(_q) | arx encrypted(_enc) |
 
 ## How to use
 It explains the preparations before use, how to use the Ouanser Interactive Labs, and how to use the actual hardware.
