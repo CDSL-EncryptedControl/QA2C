@@ -40,7 +40,7 @@ int main()
 
     // simulation_time is total run time, sample_time is sample_time.
     int simulation_time = 30;
-    double sample_time = 0.1;
+    double sample_time = 0.05;
     t_timeout interval;
     t_timeout timeout;
     timeout_get_timeout(&interval, sample_time);
@@ -49,7 +49,7 @@ int main()
     double state[4] = { 0.0, 0.0, 0.0, 0.0 };
     double voltage[2] = { 0.0, 0.0 };
     double ref[2] = { 0.0, 0.0 };
-    int32_t encoder_counts[4];
+    int32_t encoder_counts[4] = {0, 0, 0, 0};
     uint32_t encoder_channels[4] = { 0, 1, 2, 3 };
     double other_counts[10];
     uint32_t other_channles[10] = { 3000, 3001, 3002, 4000, 4001, 4002, 14000, 14001, 14002, 14003 };
@@ -57,6 +57,13 @@ int main()
     uint32_t digital_channels[2] = { 0, 1 };
     t_boolean digital_values[2] = { 1, 1 };
     hil_write_digital(board, digital_channels, 2, digital_values);
+    hil_write_analog(board, analog_channels, 2, voltage);
+    hil_set_encoder_counts(board, encoder_channels, 4, encoder_counts);
+
+    // operation LED (if it is running state, GREEN on)
+    uint32_t other_channels[3] = { 11000, 11001, 11002 };
+    double other_values[3] = { 0, 1, 0 };
+    hil_write_other(board, other_channels, 3, other_values);
 
     // calculation angle
     double theta_pitch = 0.0;
@@ -156,8 +163,14 @@ int main()
     hil_write_analog(board, analog_channels, 2, voltage);
     digital_values[0] = 0;  digital_values[1] = 0;
     hil_write_digital(board, digital_channels, 2, digital_values);
+
+    other_values[1] = 0;
+    other_values[0] = 1;
+    hil_write_other(board, other_channels, 3, other_values);
     if (board != NULL)
     {
+        hil_task_stop_all(board);
+        hil_task_delete_all(board);
         hil_close(board);
     }
 
