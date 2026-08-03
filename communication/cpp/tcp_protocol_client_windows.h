@@ -65,8 +65,8 @@ class tcp_client
             int opt = 1;
             setsockopt(this->socket_instance, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt));
             int buf_size = this->byte_size;
-            setsockopt(this->socket_instance[1], SOL_SOCKET, SO_RCVBUF, (const char*)&buf_size, sizeof(buf_size));
-            setsockopt(this->socket_instance[1], SOL_SOCKET, SO_SNDBUF, (const char*)&buf_size, sizeof(buf_size));
+            setsockopt(this->socket_instance, SOL_SOCKET, SO_RCVBUF, (const char*)&buf_size, sizeof(buf_size));
+            setsockopt(this->socket_instance, SOL_SOCKET, SO_SNDBUF, (const char*)&buf_size, sizeof(buf_size));
 
             int err = connect(this->socket_instance, (sockaddr*)&this->client, sizeof(this->client));
             if(err == -1)
