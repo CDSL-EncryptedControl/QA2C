@@ -35,6 +35,20 @@ func InitTCP(HOST string, PORT string) net.Conn {
 		}
 		os.Exit(-1)
 	}
+	
+	if err := tcp.SetReadBuffer(byte_size); err != nil {
+		if print_flag {
+			fmt.Println("def: InitTCP | error | read buffer set false")
+		}
+		os.Exit(-1)
+	}
+
+	if err := tcp.SetWriteBuffer(byte_size); err != nil {
+		if print_flag {
+			fmt.Println("def: InitTCP | error | write buffer set false")
+		}
+		os.Exit(-1)
+	}
 
 	if print_flag {
 		fmt.Println("def: InitTCP | alert | connect")

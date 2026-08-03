@@ -49,7 +49,6 @@ class tcp_server:
         try:
             self.socket_instance = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             self.socket_instance.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            self.socket_instance.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                     
             self.socket_instance.bind((self.host, self.port))
             self.socket_instance.listen()
@@ -58,6 +57,7 @@ class tcp_server:
                     
             try:
                 self.connection, _ = self.socket_instance.accept()
+                self.connection.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
                 if self.print_flag:
                     print(f"def: enter | alert | connect")
             except:
